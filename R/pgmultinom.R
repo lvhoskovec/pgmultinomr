@@ -1,4 +1,4 @@
-#' Fit Bayesian multinomial regression model with polya-gamma data augmentation
+#' Fit Bayesian categorical regression model with polya-gamma data augmentation
 #'
 #' @param niter number of iterations
 #' @param priors list of priors
