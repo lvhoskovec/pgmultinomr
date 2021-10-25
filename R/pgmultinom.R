@@ -59,45 +59,34 @@ pgmultinom <- function(niter, priors=NULL,
   ##################
   
   # impute starting values uniformly
-  # put this in C++ 
   for(i in 1:n){
-    #print(i)
     if(sum(ymiss[i,])>0){
       k_select = which(ymiss[i,] == 1) # which categories are missing 
       y[i,k_select] = rmultinom(1, size = 1, prob = rep(1/length(k_select), length(k_select)))
     }
   }
-  
 
-  # y_k = sapply(1:n, FUN = function(i){
-  #   which(y[i,]==1)
-  # })
-  # plot(y_k, ycomplete_k)
-  
   ########################
   ### fixed parameters ###
   ########################
   
-  # will change when we impute
   nik = matrix(0,n,K-1)
   nik[,1] = 1
   for(k in 2:(K-1)){
     ypartsum = matrix(y[,(1:(k-1))],nrow=n, ncol=k-1)
     nik[,k] = 1 - rowSums(ypartsum)
   }
-  
-  # will change when we impute 
+
   whichik = lapply(1:n, FUN = function(i){
     which(nik[i,]==1)
   })
 
-  
   # make the pieces to update beta 
   the_xs = list() # submatrix of X containing the rows i such that nik = 1
   the_ws = list() # ditto for w 
   the_ys = list()
   omega = list()
-  # will change when we impute 
+
   for(k in 1:(K-1)){
     sub = which(nik[,k]==1)
     the_xs[[k]] = matrix(x[sub,], ncol = q)
@@ -139,7 +128,6 @@ pgmultinom <- function(niter, priors=NULL,
     
     for(k in 1:K){
       uncertain_k[[k]] = which(ymiss[,k] == 1) # which ones are missing for each k 
-      #k_preds = ypred[,k][uncertain_k]
       k_truths[[k]] = ycomplete[,k][uncertain_k[[k]]]
       total_k[[k]] = length(uncertain_k[[k]])
     }
@@ -161,26 +149,7 @@ pgmultinom <- function(niter, priors=NULL,
     if(s%%100==0){
       print(s)
     }
-    # #print(s)
-    # y_k = sapply(1:n, FUN = function(i){
-    #   which(y[i,]==1)
-    # })
-    # 
-    # num = NULL
-    # for(k.true in 1:K){
-    #   num = c(num,sapply(1:K, FUN = function(k){
-    #     length(which(y_k[which(ycomplete_k==k.true)]==k))
-    #   }))
-    # }
-    # 
-    # truek = sort(rep(1:K, K))
-    # estk = rep(1:K,K)
-    # idf = data.frame(cbind(estk, truek, num))
-    # ggplot(idf, aes(fill=factor(estk), y=num, x=factor(truek))) +
-    #   geom_bar(position="stack", stat="identity")
 
-
-    
     #################################################
     ### parameters that can change when we impute ###
     #################################################
@@ -192,7 +161,6 @@ pgmultinom <- function(niter, priors=NULL,
       nik[,k] = 1 - rowSums(ypartsum)
     }
     
-    # will change when we impute 
     whichik = lapply(1:n, FUN = function(i){
       which(nik[i,]==1)
     })
@@ -291,19 +259,15 @@ pgmultinom <- function(niter, priors=NULL,
       }
     }
 
-    
     ###############################
     ### evaluate classification ###
     ###############################
-    
-    
+
     num_meas_k = matrix(NA, nrow = K, ncol = 4)
-    
-    
     if(!is.null(ycomplete) & nmiss > 0){
       for(k in 1:K){
         k_preds = y[,k][uncertain_k[[k]]] # predicted values for this iteration and class
-        #k_preds = y[,k]
+        # k_preds = y[,k]
         # true positives 
         tp = length(which(k_preds == 1 & k_truths[[k]] == 1)); tp
         # true negatives 
@@ -329,7 +293,7 @@ pgmultinom <- function(niter, priors=NULL,
         # specificity 
         specificity[s,k] = tn/(tn + fp)
         # f1 score 
-        #f1score[s,k] = 2*(precision[s,k] * recall[s,k])/(precision[s,k] + recall[s,k]); f1score
+        # f1score[s,k] = 2*(precision[s,k] * recall[s,k])/(precision[s,k] + recall[s,k]); f1score
 
         # number of tn, tp, fn, tp for each k 
         num_meas_k[k,] = c(tp, tn, fp, fn)
@@ -337,12 +301,6 @@ pgmultinom <- function(niter, priors=NULL,
       }
     }
 
-    
-    
-    
-    
-    
-    
     ######################################
     ### RMSE and bias for coefficients ###
     ######################################

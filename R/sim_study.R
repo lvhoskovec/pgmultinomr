@@ -3,9 +3,12 @@
 #' @param simnum simulation number 
 #' @param miss_prob proportion of cases with missing outcome data 
 #' @param niter number of MCMC iterations
+#' @param nburn number of burn-in iterations
 #' @param priors list of priors
 #' @param n sample size
 #' @param K number of outcome categories 
+#' @param p number of exposures
+#' @param q number of covariates 
 #' @param covX covariance of exposure data for simulation 
 #' @param allmiss logical; if TRUE then all outcomes are missing for any case with missing outcome data, default is FALSE 
 #' @param null_scenario logical; if TRUE then exposures and covariates have no an effect on outcome, default is FALSE
@@ -19,7 +22,8 @@
 #'
 #'
 sim_study = function(simnum = 1, miss_prob, niter=1000, nburn = 500, priors=NULL, n=1000, K=6,
-                     covX = diag(3), allmiss = FALSE, null_scenario = FALSE, equal_probs = FALSE){
+                     p = 3, q = 5, covX = diag(3), 
+                     allmiss = FALSE, null_scenario = FALSE, equal_probs = FALSE){
   
   df_all = NULL
   df_cc = NULL
@@ -34,14 +38,14 @@ sim_study = function(simnum = 1, miss_prob, niter=1000, nburn = 500, priors=NULL
   ############################################
 
   # simulate x data with true covariance structure 
-  q = dim(covX)[1]
-  x = rmvn(n, mu = rep(0,q), sigma = covX) # change the mean to -1 
+  if(p!=dim(covX)[1]) stop("Number of exposures does not match dimension of covX")
+  #p = dim(covX)[1]
+  x = rmvn(n, mu = rep(0,p), sigma = covX) # change the mean to -1 
 
   # simple covariates
-  d = 5
-  w_cov = rmvn(n, mu = rep(0,d), sigma = diag(d))
+  w_cov = rmvn(n, mu = rep(0,q), sigma = diag(q))
   w = cbind(1, w_cov)
-  d = ncol(w)
+  q = ncol(w)
   
   #############################
   ### simulate outcome data ###
@@ -49,14 +53,14 @@ sim_study = function(simnum = 1, miss_prob, niter=1000, nburn = 500, priors=NULL
 
   ## stick-breaking simulation ##
   if(!null_scenario){
-    beta_true = matrix(rnorm(q*(K-1),0,1), ncol = K-1, nrow = q); beta_true # q by K-1
-    gamma_true = matrix(rnorm(d*(K-1),0,1), ncol = K-1, nrow = d); gamma_true # d by K-1
+    beta_true = matrix(rnorm(p*(K-1),0,1), ncol = K-1, nrow = p); beta_true # p by K-1
+    gamma_true = matrix(rnorm(q*(K-1),0,1), ncol = K-1, nrow = q); gamma_true # q by K-1
     if(equal_probs) gamma_true[1,] = c(-2.8,-2.5,-2.2,-1.3,-0.5) else gamma_true[1,] = c(1.8,0.5,0,0,0) 
     #gamma_true[1,] = c(1.8,0.5,0,0,0) # data probs not null 
     #gamma_true[1,] = c(-2.8,-2.5,-2.2,-1.3,-0.5) # equal probs not null
   }else{
-    beta_true = matrix(0, ncol = K-1, nrow = q); beta_true # q by K-1
-    gamma_true = matrix(0, ncol = K-1, nrow = d); gamma_true # d by K-1
+    beta_true = matrix(0, ncol = K-1, nrow = p); beta_true # p by K-1
+    gamma_true = matrix(0, ncol = K-1, nrow = q); gamma_true # q by K-1
     if(equal_probs) gamma_true[1,] = c(-1.8,-1.5,-1,-.5,-.3) else gamma_true[1,] = c(1.2,0.8,0.6,0.2,0.1)
     #gamma_true[1,] = c(1.2,0.8,0.6,0.2,0.1) # data probs null 
     #gamma_true[1,] = c(-1.8,-1.5,-1,-.5,-.3) # equal probs null
@@ -134,44 +138,6 @@ sim_study = function(simnum = 1, miss_prob, niter=1000, nburn = 500, priors=NULL
   # level of missing within each category 
   head(ymiss)
   colMeans(ymiss) 
-  
-  # # columns are categories 
-  # ink = colSums(ycomplete) # how many truly assigned 
-  # missk = colSums(ymiss) # how many missing
-  # 
-  # # of the missing data, how many are 1's 
-  # num1 = c(sum(ymiss[,1][which(ycomplete_k==1)]),
-  #                 sum(ymiss[,2][which(ycomplete_k==2)]),
-  #                 sum(ymiss[,3][which(ycomplete_k==3)]),
-  #                 sum(ymiss[,4][which(ycomplete_k==4)]),
-  #                 sum(ymiss[,5][which(ycomplete_k==5)]),
-  #                 sum(ymiss[,6][which(ycomplete_k==6)]))
-  # 
-  # num0 = c(sum(ymiss[,1][which(ycomplete_k!=1)]),
-  #          sum(ymiss[,2][which(ycomplete_k!=2)]),
-  #          sum(ymiss[,3][which(ycomplete_k!=3)]),
-  #          sum(ymiss[,4][which(ycomplete_k!=4)]),
-  #          sum(ymiss[,5][which(ycomplete_k!=5)]),
-  #          sum(ymiss[,6][which(ycomplete_k!=6)]))
-  # 
-  # invest = rbind(ink, missk, num1, num0, t(num_meas_k))
-  # 
-  # 
-  # df_invest = data.frame(cbind(invest, rowSums(invest))); df_invest
-  # 
-  # rownames(df_invest) = c("truly equal 1", "missing", "missing, equal 1", "missing, equal 0",
-  #                         "true pos.", "true neg.", "false pos.", "false neg.")
-  # 
-  # colnames(df_invest) = c("cat 1", "cat 2", "cat 3", "cat 4", "cat 5", "cat 6", "total")
-  # 
-  # xtable(df_invest, digits = 0 )
-  # 
-  # 
-  # save_y = y 
-  
-  ####################
-  ### delete above ###
-  ####################
   
   #################
   ### Fit Model ###
@@ -259,13 +225,13 @@ sim_study = function(simnum = 1, miss_prob, niter=1000, nburn = 500, priors=NULL
     return(c(quantile(b, 0.025), quantile(b, 0.975)))
   }))
   wid_beta = mean(beta_quants[,2]-beta_quants[,1]) # width of interval 
-  cov_beta = mean(as.vector(beta_true[,-K]) > beta_quants[,1] & as.vector(beta_true[,-K]) < beta_quants[,2])
+  cov_beta = mean(as.vector(beta_true) > beta_quants[,1] & as.vector(beta_true) < beta_quants[,2])
   
   gamma_quants = t(apply(fit$gamma.vec[(nburn+1):niter,], 2, FUN = function(b){
     return(c(quantile(b, 0.025), quantile(b, 0.975)))
   }))
   wid_gamma = mean(gamma_quants[,2]-gamma_quants[,1])
-  cov_gamma = mean(as.vector(gamma_true[,-d]) > gamma_quants[,1] & as.vector(gamma_true[,-d]) < gamma_quants[,2])
+  cov_gamma = mean(as.vector(gamma_true) > gamma_quants[,1] & as.vector(gamma_true) < gamma_quants[,2])
 
   
   # par(mfrow = c(3,5))
