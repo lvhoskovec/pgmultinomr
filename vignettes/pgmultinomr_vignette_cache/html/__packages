@@ -1,0 +1,8 @@
+base
+Rcpp
+RcppArmadillo
+mvnfast
+pgdraw
+pgmultinomr
+ggplot2
+cowplot
