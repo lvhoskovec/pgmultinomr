@@ -1,7 +1,7 @@
 ---
 title: "Package Tutorial for pgmultinomr"
 output: rmarkdown::html_vignette
-date: October 22, 2021
+date: October 28, 2021
 author: Lauren Hoskovec
 vignette: >
   %\VignetteIndexEntry{Package Tutorial for pgmultinomr}
@@ -37,7 +37,7 @@ library(pgdraw)
 The package can then be installed from gitHub. 
 
 ```{r, message = FALSE, results = FALSE}
-#devtools::install_github("lvhoskovec/pgmultinomr", build_vignettes = TRUE)
+devtools::install_github("lvhoskovec/pgmultinomr", build_vignettes = TRUE)
 library(pgmultinomr)
 ```
 
