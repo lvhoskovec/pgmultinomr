@@ -11,7 +11,22 @@
 #' @param gamma_true (optional) list of true gammas (covariate coefficients) for simulation study 
 #' 
 #'
-#' @return list of parameter estimates
+#' @return a list with components
+#' \itemize{
+#'    \item beta: list with components the matrix of estimated exposure regression coefficients at each iteration
+#'    \item beta.vec: list with components vectorized estimated exposure regression coefficients at each iteration
+#'    \item gamma: list with components the matrix of estimated covariate regression coefficients at each iteration
+#'    \item gamma.vec: list with components the vectorized estimated covariate regression coefficients at each iteration
+#'    \item rmse_beta: RMSE for beta if beta_true is given
+#'    \item bias_beta: bias for beta if beta_true is given
+#'    \item rmse_gamma: RMSE for gamma if gamma_true is given
+#'    \item bias_gamma: bias for gamma if gamma_true is given
+#'    \item y.save: list with components the matrix of outcomes with imputations
+#'    \item precision: precision for each category, if ycomplete is given
+#'    \item recall: recall for each category, if ycomplete is given 
+#' 
+#' 
+#' }
 #' @export
 #'
 pgmultinom <- function(niter, priors=NULL, 
@@ -263,7 +278,6 @@ pgmultinom <- function(niter, priors=NULL,
     ### evaluate classification ###
     ###############################
 
-    num_meas_k = matrix(NA, nrow = K, ncol = 4)
     if(!is.null(ycomplete) & nmiss > 0){
       for(k in 1:K){
         k_preds = y[,k][uncertain_k[[k]]] # predicted values for this iteration and class
@@ -276,8 +290,6 @@ pgmultinom <- function(niter, priors=NULL,
         fp = length(which(k_preds == 1 & k_truths[[k]] == 0)); fp
         # false negatives
         fn = length(which(k_preds == 0 & k_truths[[k]] == 1)); fn
-        # accuracy 
-        accuracy[s,k] = (tp + tn)/total_k[[k]]
         # precision
         if(tp+fp == 0){
           precision[s,k] = NA
@@ -290,14 +302,7 @@ pgmultinom <- function(niter, priors=NULL,
         }else{
           recall[s,k] = tp/(tp + fn)
         }
-        # specificity 
-        specificity[s,k] = tn/(tn + fp)
-        # f1 score 
-        # f1score[s,k] = 2*(precision[s,k] * recall[s,k])/(precision[s,k] + recall[s,k]); f1score
 
-        # number of tn, tp, fn, tp for each k 
-        num_meas_k[k,] = c(tp, tn, fp, fn)
-        
       }
     }
 
@@ -339,8 +344,7 @@ pgmultinom <- function(niter, priors=NULL,
                    rmse_beta = rmse_beta, bias_beta = bias_beta, 
                    rmse_gamma = rmse_gamma, bias_gamma = bias_gamma, 
                    y.save = y.save,
-                   accuracy = accuracy, precision = precision, recall = recall, 
-                   specificity = specificity, f1score = f1score)
+                   precision = precision, recall = recall)
   
   class(list.save) = "pgmultinom"
   
