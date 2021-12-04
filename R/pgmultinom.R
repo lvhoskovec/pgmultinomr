@@ -1,4 +1,4 @@
-#' Fit Bayesian categorical regression model with polya-gamma data augmentation
+#' Bayesian categorical regression model with polya-gamma data augmentation
 #'
 #' @param niter number of iterations
 #' @param priors list of priors
@@ -10,6 +10,9 @@
 #' @param beta_true (optional) list of true betas (exposure coefficients) for simulation study 
 #' @param gamma_true (optional) list of true gammas (covariate coefficients) for simulation study 
 #' 
+#'
+#' @importFrom mvnfast rmvn 
+#' @importFrom stats rmultinom
 #'
 #' @return a list with components
 #' \itemize{

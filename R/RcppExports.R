@@ -17,22 +17,6 @@ rcpp_pgdraw <- function(b, c) {
     .Call(`_pgmultinomr_rcpp_pgdraw`, b, c)
 }
 
-rcpparma_hello_world <- function() {
-    .Call(`_pgmultinomr_rcpparma_hello_world`)
-}
-
-rcpparma_outerproduct <- function(x) {
-    .Call(`_pgmultinomr_rcpparma_outerproduct`, x)
-}
-
-rcpparma_innerproduct <- function(x) {
-    .Call(`_pgmultinomr_rcpparma_innerproduct`, x)
-}
-
-rcpparma_bothproducts <- function(x) {
-    .Call(`_pgmultinomr_rcpparma_bothproducts`, x)
-}
-
 update_beta <- function(k, ok, yk, xk, wgam, betaVarInverse, betaMean) {
     .Call(`_pgmultinomr_update_beta`, k, ok, yk, xk, wgam, betaVarInverse, betaMean)
 }

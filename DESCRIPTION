@@ -5,10 +5,12 @@ Version: 1.0
 Date: 2021-10-22
 Author: Lauren Hoskovec
 Maintainer: Lauren Hoskovec <lvheck@rams.colostate.edu>
-Description: Fits Bayesian categorical regression model to data with partially to fully missing outcomes using polya-gamma data augmentation
+Description: This package fits Bayesian categorical regression models using polya-gamma data augmentation.
 License: GPL (>= 2)
 Encoding: UTF-8
 Imports: Rcpp (>= 1.0.6), stats, parallel, mvnfast, pgdraw
 LinkingTo: Rcpp, RcppArmadillo
 Suggests: knitr, rmarkdown, devtools, tinytest
+VignetteBuilder: knitr
 RoxygenNote: 7.1.1
+Depends: R (>= 2.10)

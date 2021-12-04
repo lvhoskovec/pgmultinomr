@@ -11,6 +11,8 @@
 #' @param equal_probs logical; if TRUE the simulation setting is equal probabilities, if FALSE the simulation setting is data probabilities
 #'
 #' @importFrom mvnfast rmvn
+#' @importFrom stats rnorm quantile rmultinom
+#' @importFrom utils head
 #'
 #' @return summary of simulation results
 #' @export

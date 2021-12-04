@@ -1,8 +1,8 @@
 ---
-title: "Package Tutorial for pgmultinomr"
+title: "Package Tutorial for pgmultinomr: Bayesian Categorical Regression Model with Polya-Gamma Data Augmentation"
 output: rmarkdown::html_vignette
 date: October 28, 2021
-author: Lauren Hoskovec
+author: Lauren Hoskovec and Ander Wilson
 vignette: >
   %\VignetteIndexEntry{Package Tutorial for pgmultinomr}
   %\VignetteEngine{knitr::rmarkdown}
@@ -10,16 +10,18 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE) # check this cache = TRUE here 
 ```
 
-The R package pgmultinomr provides a function to fit a Bayesian categorical regression model with partially or fully missing outcomes, using polya-gamma (PG) data augmentation for efficient Gibbs inference. For more details on the method, see [Hoskovec et al.]. The following functions are available in the package pgmultinomr: 
+The R package pgmultinomr provides a function to fit a Bayesian categorical regression model using polya-gamma (PG) data augmentation for efficient Gibbs inference. The categorical outcome data may be complete, or it may contain partially or fully missing outcomes. For more details on the method, see [Hoskovec et al.]. The following functions are available in the package pgmultinomr: 
 
 |function          |         brief description of usage |
 |------------------|------------------------------------|
 pgmultinom | fit Bayesian categorical regression with K>2 using PG data augmentation  | 
-sim_dat | simulate data to fit pgmultinom |
-sim_study | reproduce simulation study in [Hoskovec et al.] |
+sim_dat | simulate data for categorical regression with possible missing outcomes |
+sim_study | reproduce simulation study in [Hoskovec et al.] for a single data set|
+get_odds_ratio | | 
+
 
 In this vignette, we show how to install the package, fit the model, and post-process and visualize the results for inference. We also demonstrate how to reproduce the simulation study in [Hoskovec et al.]. 
 
@@ -65,7 +67,7 @@ The default priors are standard normal.
 
 # Simulate Data #
 
-We first use the `sim_dat` function included the package to simulate data. The `sim_dat` function includes the following parameters: `n` is the number of observations, `miss_prob` is the proportion of observations with partially or fully missing outcomes, `K` is the number of outcome categories, `p` is the number of exposures, `q` is the number of covariates, and `covX` is the covariance matrix of the exposure data. Three remaining parameters determine the simulation design: 1) `allmiss` is logical; if TRUE, observations with missing outcome data are missing values for all K categories (fully missing), if FALSE, they are missing values for between 2 and K-1 categories (partially missing), 2) null_scenario is logical; if TRUE, the regression coefficients are all set to 0 (null), if FALSE, the regression coefficients are all simulated from independent standard normal distributions (signal), and 3) equal_probs is logical; if TRUE, category-specific intercepts are set so each category has roughly equal amounts of data (equal probabilities), if FALSE, intercepts are set to mimic the outcome category probabilities from the data analysis in [Hoskovec et al.] (data probabilities).
+We first use the `sim_dat` function included the package to simulate data. The `sim_dat` function includes the following parameters: `n` is the number of observations, `miss_prob` is the proportion of observations with partially or fully missing outcomes, `K` is the number of outcome categories, `p` is the number of exposures, `q` is the number of covariates, and `covX` is the covariance matrix of the exposure data. Three remaining parameters determine the simulation design: 1) `allmiss` is logical; if TRUE, observations with missing outcome data are missing values for all K categories (fully missing), if FALSE, they are missing values for between 2 and K-1 categories (partially missing), 2) null_scenario is logical; if TRUE, the regression coefficients are all set to 0 (null), if FALSE, the regression coefficients are all simulated from independent standard normal distributions (signal), and 3) equal_probs is logical; if TRUE, category-specific intercepts are set so each category has roughly equal amounts of data (referred to as "equal probabilities" in manuscript), if FALSE, intercepts are set to mimic the outcome category probabilities from the data analysis in [Hoskovec et al.] (referred to as "data probabilities" in manuscript).
 
 We generate $n=1000$ observations with $p=3$ correlated exposures, $q=5$ independent covariates plus an intercept, and $K=6$ outcome variables. To mimic the simulation study in [Hoskovec et al.], we generate exposure data from a multivariate normal distribution with mean 0 and covariance matrix `covX` given by
 
@@ -91,7 +93,7 @@ The object `dat` is a list with elements: `y` the simulated data with missing va
 
 Next we demonstrate how to fit the Bayesian multinomial regression model using the `pgmultinom` function. The function `pgmultinom` takes the following parameters: `niter` is the total number of MCMC iterations, `priors` is a list of priors (see below for details), `y` is the data (with missing values), `ycomplete` is the (optional) complete data, `x` is the exposure data matrix, `w` is the (optional) covariate data matrix, `intercept` is logical and dictates if an intercept term should be estimated, `beta_true` is the (optional) matrix of true exposure regression coefficients, and gamma_true is the (optional) matrix of true covariate regression coefficients. We include the 3 exposures simulated above and all pairwise interactions. We fit the model using our simulated data by
 
-```{r, cache = TRUE}
+```{r, cache = TRUE, message = FALSE, echo = FALSE}
 niter = 1000
 ints <- combn(1:ncol(dat$x), 2)
 z <- apply(ints, 2, FUN = function(a) {
@@ -282,4 +284,8 @@ The object ``sim_example$complete_case_results`` is a data frame containing (roo
 round(sim_example$complete_case_results,2)
 ```
 
-As you can see, we obtain estimation gains from our proposed method over the complete case analysis as evidenced by smaller RMSE and credible interval width for exposure and covariate regression coefficients. 
+As you can see, we obtain estimation gains from our proposed method over the complete case analysis as evidenced by smaller RMSE and credible interval width for exposure and covariate regression coefficients.
+
+# Contact Information
+
+For more information, questions, or comments, contact the package maintainer Lauren Hoskovec at lvheck@rams.colostate.edu. 

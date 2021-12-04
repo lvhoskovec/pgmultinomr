@@ -8,8 +8,8 @@
 #' @param K number of outcome categories
 #' @param refK index of reference outcome category
 #'
-#' @return
-#' @export
+#' @return posterior distribution of odds ratio 
+#' @export 
 #'
 
 get_odds_ratio = function(x.star, x.base, beta_posterior, niter, nburn, K, refK){

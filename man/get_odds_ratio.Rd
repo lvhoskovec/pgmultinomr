@@ -22,7 +22,7 @@ get_odds_ratio(x.star, x.base, beta_posterior, niter, nburn, K, refK)
 \item{refK}{index of reference outcome category}
 }
 \value{
-
+posterior distribution of odds ratio
 }
 \description{
 Get posterior distribution of odds ratio

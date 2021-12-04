@@ -2,7 +2,7 @@
 % Please edit documentation in R/pgmultinom.R
 \name{pgmultinom}
 \alias{pgmultinom}
-\title{Fit Bayesian categorical regression model with polya-gamma data augmentation}
+\title{Bayesian categorical regression model with polya-gamma data augmentation}
 \usage{
 pgmultinom(
   niter,
@@ -36,8 +36,23 @@ pgmultinom(
 \item{gamma_true}{(optional) list of true gammas (covariate coefficients) for simulation study}
 }
 \value{
-list of parameter estimates
+a list with components
+\itemize{
+   \item beta: list with components the matrix of estimated exposure regression coefficients at each iteration
+   \item beta.vec: list with components vectorized estimated exposure regression coefficients at each iteration
+   \item gamma: list with components the matrix of estimated covariate regression coefficients at each iteration
+   \item gamma.vec: list with components the vectorized estimated covariate regression coefficients at each iteration
+   \item rmse_beta: RMSE for beta if beta_true is given
+   \item bias_beta: bias for beta if beta_true is given
+   \item rmse_gamma: RMSE for gamma if gamma_true is given
+   \item bias_gamma: bias for gamma if gamma_true is given
+   \item y.save: list with components the matrix of outcomes with imputations
+   \item precision: precision for each category, if ycomplete is given
+   \item recall: recall for each category, if ycomplete is given 
+
+
+}
 }
 \description{
-Fit Bayesian categorical regression model with polya-gamma data augmentation
+Bayesian categorical regression model with polya-gamma data augmentation
 }
