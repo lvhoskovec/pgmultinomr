@@ -3,39 +3,28 @@
 #' @param niter number of iterations
 #' @param priors list of priors
 #' @param y matrix of outcome data, with possible missing observations denoted by NA
-#' @param ycomplete matrix of complete outcome data, for validation 
 #' @param x matrix of exposure data 
 #' @param w (optional) matrix of covariate data 
-#' @param intercept logical; include an intercept?
-#' @param beta_true (optional) list of true betas (exposure coefficients) for simulation study 
-#' @param gamma_true (optional) list of true gammas (covariate coefficients) for simulation study 
+#' @param intercept logical; if TRUE, include an intercept when fitting model 
 #' 
-#'
 #' @importFrom mvnfast rmvn 
 #' @importFrom stats rmultinom
 #'
 #' @return a list with components
 #' \itemize{
-#'    \item beta: list with components the matrix of estimated exposure regression coefficients at each iteration
-#'    \item beta.vec: list with components vectorized estimated exposure regression coefficients at each iteration
-#'    \item gamma: list with components the matrix of estimated covariate regression coefficients at each iteration
-#'    \item gamma.vec: list with components the vectorized estimated covariate regression coefficients at each iteration
-#'    \item rmse_beta: RMSE for beta if beta_true is given
-#'    \item bias_beta: bias for beta if beta_true is given
-#'    \item rmse_gamma: RMSE for gamma if gamma_true is given
-#'    \item bias_gamma: bias for gamma if gamma_true is given
-#'    \item y.save: list with components the matrix of outcomes with imputations
-#'    \item precision: precision for each category, if ycomplete is given
-#'    \item recall: recall for each category, if ycomplete is given 
-#' 
-#' 
+#'    \item y_original: matrix, categorical outcome data y for fitting 
+#'    \item beta: list with components, the matrix of estimated exposure regression coefficients at each iteration
+#'    \item beta.vec: list with components, the vectorized estimated exposure regression coefficients at each iteration
+#'    \item gamma: list with components, the matrix of estimated covariate regression coefficients at each iteration
+#'    \item gamma.vec: list with components, the vectorized estimated covariate regression coefficients at each iteration
+#'    \item y.save: list with components, the matrix of outcomes with imputations at each iteration 
 #' }
 #' @export
 #'
 pgmultinom <- function(niter, priors=NULL, 
-                       y, ycomplete=NULL, x, w = NULL, intercept = TRUE,
-                       beta_true = NULL, gamma_true = NULL){
+                       y, x, w = NULL, intercept = TRUE){
   
+  y_original = y 
   
   K = dim(y)[2]; K # number of categories
   n = dim(y)[1]; n # sample size
@@ -126,37 +115,8 @@ pgmultinom <- function(niter, priors=NULL,
   beta.save = list()# exposure coefficients
   gamma.save = list() # covariate coefficients 
   y.save = list() # save imputations 
-  rmse_beta = numeric()
-  rmse_gamma = numeric()
-  bias_beta = numeric()
-  bias_gamma = numeric()
-  beta.vec.save = matrix(NA, niter, q*(K-1))
+  beta.vec.save = matrix(NA, niter, q*(K-1)) 
   gamma.vec.save = matrix(NA, niter, d*(K-1))
-
-  if(!is.null(ycomplete)){
-    # classification 
-    accuracy = matrix(NA, niter, K)
-    precision = matrix(NA, niter, K)
-    recall = matrix(NA, niter, K)
-    specificity = matrix(NA, niter, K)
-    f1score = matrix(NA, niter, K)
-    uncertain_k = list()
-    k_truths = list()
-    total_k = list()
-    
-    for(k in 1:K){
-      uncertain_k[[k]] = which(ymiss[,k] == 1) # which ones are missing for each k 
-      k_truths[[k]] = ycomplete[,k][uncertain_k[[k]]]
-      total_k[[k]] = length(uncertain_k[[k]])
-    }
-  }else{
-    accuracy = NULL
-    precision = NULL
-    recall = NULL
-    specificity = NULL
-    f1score = NULL
-  }
-
 
   ##################
   ### START MCMC ###
@@ -277,51 +237,9 @@ pgmultinom <- function(niter, priors=NULL,
       }
     }
 
-    ###############################
-    ### evaluate classification ###
-    ###############################
-
-    if(!is.null(ycomplete) & nmiss > 0){
-      for(k in 1:K){
-        k_preds = y[,k][uncertain_k[[k]]] # predicted values for this iteration and class
-        # k_preds = y[,k]
-        # true positives 
-        tp = length(which(k_preds == 1 & k_truths[[k]] == 1)); tp
-        # true negatives 
-        tn = length(which(k_preds == 0 & k_truths[[k]] == 0)); tn
-        # false positives 
-        fp = length(which(k_preds == 1 & k_truths[[k]] == 0)); fp
-        # false negatives
-        fn = length(which(k_preds == 0 & k_truths[[k]] == 1)); fn
-        # precision
-        if(tp+fp == 0){
-          precision[s,k] = NA
-        }else{
-          precision[s,k] = tp/(tp + fp)
-        }
-        # recall 
-        if(tp + fn == 0){
-          recall[s,k] = NA
-        }else{
-          recall[s,k] = tp/(tp + fn)
-        }
-
-      }
-    }
-
-    ######################################
-    ### RMSE and bias for coefficients ###
-    ######################################
     
-    if(!is.null(beta_true)){
-      rmse_beta[s] = sqrt(mean((betak-beta_true)^2))
-      bias_beta[s] = mean(betak-beta_true)
-    }
-
-    if(!is.null(gamma_true)){
-      rmse_gamma[s] = sqrt(mean((gammak-gamma_true)^2))
-      bias_gamma[s] = mean(gammak-gamma_true)
-    }
+    ### simulation results ##
+    # moved to a post-processing function 
     
     
     ################################
@@ -342,12 +260,9 @@ pgmultinom <- function(niter, priors=NULL,
     
   }
   
-  list.save = list(beta = beta.save, beta.vec = beta.vec.save, 
+  list.save = list(y_original = y_original, beta = beta.save, beta.vec = beta.vec.save, 
                    gamma = gamma.save, gamma.vec = gamma.vec.save,
-                   rmse_beta = rmse_beta, bias_beta = bias_beta, 
-                   rmse_gamma = rmse_gamma, bias_gamma = bias_gamma, 
-                   y.save = y.save,
-                   precision = precision, recall = recall)
+                   y.save = y.save)
   
   class(list.save) = "pgmultinom"
   

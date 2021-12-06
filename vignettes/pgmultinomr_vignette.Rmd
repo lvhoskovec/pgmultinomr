@@ -10,7 +10,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE) # check this cache = TRUE here 
+knitr::opts_chunk$set(echo = TRUE) 
 ```
 
 The R package pgmultinomr provides a function to fit a Bayesian categorical regression model using polya-gamma (PG) data augmentation for efficient Gibbs inference. The categorical outcome data may be complete, or it may contain partially or fully missing outcomes. For more details on the method, see [Hoskovec et al.]. The following functions are available in the package pgmultinomr: 
@@ -20,7 +20,7 @@ The R package pgmultinomr provides a function to fit a Bayesian categorical regr
 pgmultinom | fit Bayesian categorical regression with K>2 using PG data augmentation  | 
 sim_dat | simulate data for categorical regression with possible missing outcomes |
 sim_study | reproduce simulation study in [Hoskovec et al.] for a single data set|
-get_odds_ratio | | 
+get_odds_ratio | calculate posterior distribution of odds ratio as a function of exposures | 
 
 
 In this vignette, we show how to install the package, fit the model, and post-process and visualize the results for inference. We also demonstrate how to reproduce the simulation study in [Hoskovec et al.]. 
@@ -91,7 +91,7 @@ The object `dat` is a list with elements: `y` the simulated data with missing va
 
 # Fit Model # 
 
-Next we demonstrate how to fit the Bayesian multinomial regression model using the `pgmultinom` function. The function `pgmultinom` takes the following parameters: `niter` is the total number of MCMC iterations, `priors` is a list of priors (see below for details), `y` is the data (with missing values), `ycomplete` is the (optional) complete data, `x` is the exposure data matrix, `w` is the (optional) covariate data matrix, `intercept` is logical and dictates if an intercept term should be estimated, `beta_true` is the (optional) matrix of true exposure regression coefficients, and gamma_true is the (optional) matrix of true covariate regression coefficients. We include the 3 exposures simulated above and all pairwise interactions. We fit the model using our simulated data by
+Next we demonstrate how to fit the Bayesian multinomial regression model using the `pgmultinom` function. The function `pgmultinom` takes the following parameters: `niter` is the total number of MCMC iterations, `priors` is a list of priors (see below for details), `y` is the categorical outcome data (with missing any values), `x` is the exposure data matrix, `w` is the (optional) covariate data matrix, and `intercept` is logical dictating if an intercept term should be estimated. The model requires defining exposure data `x`, whereas covariate data `w` are optional. We include the 3 exposures simulated above and all pairwise interactions in `x`. We also include our simulated independent covariate data in `w`. We fit the model by
 
 ```{r, cache = TRUE, message = FALSE, echo = FALSE}
 niter = 1000
@@ -100,9 +100,8 @@ z <- apply(ints, 2, FUN = function(a) {
   dat$x[,a[1]] * dat$x[,a[2]]
 })
 x = cbind(dat$x,z)
-fit = pgmultinom(niter=niter, priors=NULL, y = dat$y, ycomplete = dat$ycomplete, x = x, 
-                 w = dat$w, intercept = TRUE, 
-                 beta_true = dat$beta_true, gamma_true = dat$gamma_true)
+fit = pgmultinom(niter=niter, priors=NULL, y = dat$y, x = x, 
+                 w = dat$w, intercept = TRUE)
 ```
 
 # Post-Process Results #
@@ -260,7 +259,7 @@ The user can specify different prior distributions for the exposure and covariat
 
 The package includes the function ``sim_study`` to reproduce the simulation study in [Hoskovec et al.]. See Section 4 in [Hoskovec et al.] for more details on the simulation study. Here we demonstrate how to use ``sim_study``. 
 
-The function ``sim_study`` takes in the following parameters: ``simnum`` is the simulation number (which is used to set a seed), ``niter`` is the total number of MCMC iterations to run the model, ``nburn`` is the number of burn-in iterations, ``n`` is the sample size, and ``miss_prob`` is the proportion of observations with missing outcome data. The three remaining parameters determine the simulation design as described above. To reiterate: 1) `allmiss` is logical; if TRUE, observations with missing outcome data are missing values for all K categories (fully missing), if FALSE, they are missing values for between 2 and K-1 categories (partially missing), 2) null_scenario is logical; if TRUE, the regression coefficients are all set to 0 (null), if FALSE, the regression coefficients are all simulated from independent standard normal distributions (signal), and 3) equal_probs is logical; if TRUE, category-specific intercepts are set so each category has roughly equal amounts of data (equal probabilities), if FALSE, intercepts are set to mimic the outcome category probabilities from the data analysis in [Hoskovec et al.] (data probabilities). Other parameters for the model fit are set to that described in Section 3 in [Hoskovec et al.].
+The function ``sim_study`` takes in the following parameters: ``simnum`` is the simulation number (which is used to set a seed), ``niter`` is the total number of MCMC iterations to run the model, ``nburn`` is the number of burn-in iterations, ``n`` is the sample size, and ``miss_prob`` is the proportion of observations with missing outcome data. The three remaining parameters determine the simulation design as described above. To reiterate: 1) `allmiss` is logical; if TRUE, observations with missing outcome data are missing values for all K categories (fully missing), if FALSE, they are missing values for between 2 and K-1 categories (partially missing), 2) null_scenario is logical; if TRUE, the regression coefficients are all set to 0 (null), if FALSE, the regression coefficients are all simulated from independent standard normal distributions (signal), and 3) equal_probs is logical; if TRUE, category-specific intercepts are set so each category has roughly equal amounts of data (referred to as "equal probabilities" in the manuscript), if FALSE, intercepts are set to mimic the outcome category probabilities from the data analysis in [Hoskovec et al.] (referred to as ``data probabilities" in the manuscript). Other parameters for the model fit are set to that described in Section 3 in [Hoskovec et al.].
 
 Below we demonstrate running the simulation study for the scenario: data probabilities, partially missing outcomes, and a signal in the regression coefficients. We specify a missing data level of 50$\%$. The function fits the `pgmultinom` model as described above and imputes data for missing outcomes. It also fits the model to the subset of complete cases. 
 

@@ -4,17 +4,7 @@
 \alias{pgmultinom}
 \title{Bayesian categorical regression model with polya-gamma data augmentation}
 \usage{
-pgmultinom(
-  niter,
-  priors = NULL,
-  y,
-  ycomplete = NULL,
-  x,
-  w = NULL,
-  intercept = TRUE,
-  beta_true = NULL,
-  gamma_true = NULL
-)
+pgmultinom(niter, priors = NULL, y, x, w = NULL, intercept = TRUE)
 }
 \arguments{
 \item{niter}{number of iterations}
@@ -23,34 +13,21 @@ pgmultinom(
 
 \item{y}{matrix of outcome data, with possible missing observations denoted by NA}
 
-\item{ycomplete}{matrix of complete outcome data, for validation}
-
 \item{x}{matrix of exposure data}
 
 \item{w}{(optional) matrix of covariate data}
 
-\item{intercept}{logical; include an intercept?}
-
-\item{beta_true}{(optional) list of true betas (exposure coefficients) for simulation study}
-
-\item{gamma_true}{(optional) list of true gammas (covariate coefficients) for simulation study}
+\item{intercept}{logical; if TRUE, include an intercept when fitting model}
 }
 \value{
 a list with components
 \itemize{
-   \item beta: list with components the matrix of estimated exposure regression coefficients at each iteration
-   \item beta.vec: list with components vectorized estimated exposure regression coefficients at each iteration
-   \item gamma: list with components the matrix of estimated covariate regression coefficients at each iteration
-   \item gamma.vec: list with components the vectorized estimated covariate regression coefficients at each iteration
-   \item rmse_beta: RMSE for beta if beta_true is given
-   \item bias_beta: bias for beta if beta_true is given
-   \item rmse_gamma: RMSE for gamma if gamma_true is given
-   \item bias_gamma: bias for gamma if gamma_true is given
-   \item y.save: list with components the matrix of outcomes with imputations
-   \item precision: precision for each category, if ycomplete is given
-   \item recall: recall for each category, if ycomplete is given 
-
-
+   \item y_original: matrix, categorical outcome data y for fitting 
+   \item beta: list with components, the matrix of estimated exposure regression coefficients at each iteration
+   \item beta.vec: list with components, the vectorized estimated exposure regression coefficients at each iteration
+   \item gamma: list with components, the matrix of estimated covariate regression coefficients at each iteration
+   \item gamma.vec: list with components, the vectorized estimated covariate regression coefficients at each iteration
+   \item y.save: list with components, the matrix of outcomes with imputations at each iteration 
 }
 }
 \description{

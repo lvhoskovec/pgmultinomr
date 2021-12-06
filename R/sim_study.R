@@ -56,8 +56,8 @@ sim_study = function(simnum = 1, niter=1000, nburn = 500, n=1000, miss_prob = 0,
     if(equal_probs) gamma_true[1,] = c(-1.8,-1.5,-1,-.5,-.3) else gamma_true[1,] = c(1.2,0.8,0.6,0.2,0.1)
   }
 
-  xbetaK_true = crossprod(t(x),beta_true); head(xbetaK_true) # n by K-1
-  wgammaK_true = crossprod(t(w),gamma_true); head(wgammaK_true) # n by K-1
+  xbetaK_true = crossprod(t(x),beta_true) # n by K-1
+  wgammaK_true = crossprod(t(w),gamma_true) # n by K-1
   psi_true = xbetaK_true + wgammaK_true
 
   # make pi
@@ -68,7 +68,6 @@ sim_study = function(simnum = 1, niter=1000, nburn = 500, n=1000, miss_prob = 0,
     piik[,k] = pitildek[,k]*(1-rowSums(matrix(piik[,(1:(k-1))],nrow=n,ncol = k-1)))
   }
   piik[,K] = 1-rowSums(piik)
-  colMeans(piik)
 
   # simulate multinomial data
   # make sure each category has at least one known observation 
@@ -107,8 +106,10 @@ sim_study = function(simnum = 1, niter=1000, nburn = 500, n=1000, miss_prob = 0,
   ### Fit Model ###
   #################
   
-  fit = pgmultinom(niter = niter, priors = NULL, y = y, ycomplete = ycomplete, x = x, w = w,
-                   intercept = TRUE, beta_true = beta_true, gamma_true = gamma_true)
+  fit = pgmultinom(niter = niter, priors = NULL, y = y, x = x, w = w,
+                   intercept = TRUE)
+  
+  fit_summary = get_sim_results(fit = fit, ycomplete = ycomplete, beta_true = beta_true, gamma_true = gamma_true)
   
   
   if(miss_prob > 0){
@@ -117,8 +118,12 @@ sim_study = function(simnum = 1, niter=1000, nburn = 500, n=1000, miss_prob = 0,
     x_cc = x[-whichmiss,]
     w_cc = w[-whichmiss,]
 
-    fit_cc = pgmultinom(niter = niter, priors = NULL, y = y_cc, ycomplete = NULL, x = x_cc, w = w_cc,
-                        intercept = TRUE, beta_true = beta_true, gamma_true = gamma_true)
+    fit_cc = pgmultinom(niter = niter, priors = NULL, y = y_cc, x = x_cc, w = w_cc,
+                        intercept = TRUE)
+    
+    fit_cc_summary = get_sim_results(fit = fit_cc, beta_true = beta_true, gamma_true = gamma_true)
+    
+    
   }
 
 
@@ -127,8 +132,8 @@ sim_study = function(simnum = 1, niter=1000, nburn = 500, n=1000, miss_prob = 0,
   ###################
   
   if(miss_prob > 0){
-    precision_mean = apply(fit$precision[(nburn+1):niter, ], 2, FUN = function(m) mean(m, na.rm = TRUE))
-    recall_mean = apply(fit$recall[(nburn+1):niter, ], 2, FUN = function(m) mean(m, na.rm = TRUE))
+    precision_mean = apply(fit_summary$precision[(nburn+1):niter, ], 2, FUN = function(m) mean(m, na.rm = TRUE))
+    recall_mean = apply(fit_summary$recall[(nburn+1):niter, ], 2, FUN = function(m) mean(m, na.rm = TRUE))
   }else{
     precision_mean = rep(NA, K)
     recall_mean = rep(NA, K)
@@ -138,12 +143,15 @@ sim_study = function(simnum = 1, niter=1000, nburn = 500, n=1000, miss_prob = 0,
   ### Regression coefficient estimates ###
   ########################################
   
-  rmse_beta = mean(fit$rmse_beta[(nburn+1):niter])
-  rmse_gamma = mean(fit$rmse_gamma[(nburn+1):niter])
+  # RMSE
+  rmse_beta = mean(fit_summary$rmse_beta[(nburn+1):niter])
+  rmse_gamma = mean(fit_summary$rmse_gamma[(nburn+1):niter])
   
-  bias_beta = mean(fit$bias_beta[(nburn+1):niter])
-  bias_gamma = mean(fit$bias_gamma[(nburn+1):niter]) 
+  # bias
+  bias_beta = mean(fit_summary$bias_beta[(nburn+1):niter])
+  bias_gamma = mean(fit_summary$bias_gamma[(nburn+1):niter]) 
   
+  # coverage 
   beta_quants = t(apply(fit$beta.vec[(nburn+1):niter,], 2, FUN = function(b){
     return(c(quantile(b, 0.025), quantile(b, 0.975)))
   }))
@@ -177,13 +185,16 @@ sim_study = function(simnum = 1, niter=1000, nburn = 500, n=1000, miss_prob = 0,
   ######################################################
 
   if(miss_prob > 0){
-    cc_rmse_beta = mean(fit_cc$rmse_beta[(nburn+1):niter])
-    cc_rmse_gamma = mean(fit_cc$rmse_gamma[(nburn+1):niter])
     
-    cc_bias_beta = mean(fit_cc$bias_beta[(nburn+1):niter])
-    cc_bias_gamma = mean(fit_cc$bias_gamma[(nburn+1):niter]) 
+    # RMSE
+    cc_rmse_beta = mean(fit_cc_summary$rmse_beta[(nburn+1):niter])
+    cc_rmse_gamma = mean(fit_cc_summary$rmse_gamma[(nburn+1):niter])
     
+    # bias
+    cc_bias_beta = mean(fit_cc_summary$bias_beta[(nburn+1):niter])
+    cc_bias_gamma = mean(fit_cc_summary$bias_gamma[(nburn+1):niter]) 
     
+    # coverage
     cc_beta_quants = t(apply(fit_cc$beta.vec[(nburn+1):niter,], 2, FUN = function(b){
       return(c(quantile(b, 0.025), quantile(b, 0.975)))
     }))
